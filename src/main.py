@@ -5,6 +5,7 @@ import os
 from argparse import ArgumentParser
 import numpy as np
 import pandas as pd
+from .preproc import PreProc
 from .opt_test_v3 import Optimizer
 from .property_scoring import PropertyScoring
 
@@ -14,6 +15,17 @@ def arguments() -> ArgumentParser:
     arguments parser function
     """
     parser = ArgumentParser()
+    parser.add_argument(
+        '--do_preproc', type=bool, default=False
+    )
+    parser.add_argument(
+        '--dat_name', type=str, default="preproc_data_v4",
+    )
+    parser.add_argument(
+        '--download',
+        type = bool, default = False,
+        help = 'Download data to local folder or not'
+    )
     parser.add_argument(
         '-r', '--row', type = int, default = 5,
         help = 'Number of rows to be optimized'
@@ -74,6 +86,13 @@ if __name__ == "__main__":
     preproc_data = pd.read_csv(f'{os.getcwd()}/data/preproc_data_v3.csv')
     preproc_data = preproc_data[preproc_data['name'].isin(org_data_full_filtered['name'])]
     preproc_data.to_csv(f'{os.getcwd()}/data/preproc_data_v4.csv', index=False)
+    ## ================= Preproc ================= ##
+    if args.do_preproc:
+        preprocessing = PreProc(args.dat_name, args.download)
+        if args.dat_name.split("_")[0] == "preproc":
+            preprocessing.for_preproc_data()
+    else:
+        pass
     ## ================= Optimizer ================= ##
     optimizer = Optimizer(
         f"{os.getcwd()}/data/use_data.csv", args.row, args.post_cnt, args.spec_kols,
@@ -91,4 +110,5 @@ if __name__ == "__main__":
     # cons_func = sorted(cons_func, key = lambda x: x['weight'])
     optimizer.print_final_output(args.type)
     np.save(f'{os.getcwd()}/data/param_mat/all_{args.row}_{args.type}.npy', result_with_label)
+
 
