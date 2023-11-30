@@ -1,6 +1,16 @@
+<p align="center">
+  <img src="image/README/1701262792359.png" width="200"/>
+</p>
+
 # Creation Portfolio
 
-## Build Virtual Environment
+Creation Portfolio is a project for optimizing the KOL selection problem. This project is based on [scipy](https://www.scipy.org/) minimize method.
+
+Creation Portfolio is primarily designed to provide effective, robust and explainable optimization architecture for firms who want to select promotion KOLs on social media platforms for their products.
+
+## ⚙️ Build Virtual Environment
+
+We recommend you to build a virtual environment to run this project.
 
 ```plaintext
 python -m venv your_venv_name
@@ -8,7 +18,7 @@ source your_venv_name/bin/activate
 pip install -r requirements.txt
 ```
 
-## Module Structure
+## ⚒️ Module Structure
 
 ```plaintext
 root/
@@ -38,124 +48,62 @@ root/
   |── README.md
   |── .coveragerc
   |── pytest.ini
+  |── clean.sh
+  |── demo.sh
   |── requirements.txt
-  └── run.sh (optional)
+  └── run_test.sh (optional)
 ```
 
-## Files
+## 🔔 Key Features
 
-### preproc.py
+### Optimization Procedures
 
-> Data preprocessing file with below features
+The main goal of this project is to **minimizing** the cost of promotion, so we design a simple objective function to achieve this goal.
 
-1. Data cleaning
-2. Simple EDA
-3. Impute missing values
-4. Platform splitting
+$$
+\text{Obj function} = \text{minimize  }\mathbf{Cost}^\mathbf{T} \mathbf{Price}
+$$
 
-#### Execute command - `preproc.py`
+Where $\mathbf{Cost}$ is the cost of each post and $\mathbf{Price}$ is the price of each post.
 
-```plaintext
-python -m src.preproc --download <download or not>
-```
+Due to the issue of **over concentration** of post, we add penalty term to the objective function to split the post count of each KOL.
 
-Where
+1. L1 Regularization (Ridge Regression)
+   $$
+   \text{Obj function} = \text{minimize  }\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{|\cdot|}
+   $$
+2. L2 Regularization (Lasso Regression)
+   $$
+   \text{Obj function} = \text{minimize  }\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{2}
+   $$
+3. ElasticNet
+   $$
+   \text{Obj function} = \text{minimize  }\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \left(\alpha \cdot \mathbf{Count}^{|\cdot|} + \frac{(1-\alpha)}{2} \cdot \mathbf{Count}^{2}\right)
+   $$
 
-- `--download` is optional argument to download data to local.
+### Voice Decreasing Rate
 
-### `utils.py`
+To fit the real world situation, we've designed a voice decreasing rate function to simulate the voice decreasing rate of KOLs. In this project, we use the following function to simulate the voice decreasing rate.
 
-> General utility functions for optimizatiom
+$$
+\text{Voice Decreasing Rate} = \frac{1 - e^{-\frac{n}{k}}}{1 - e^{-\frac{1}{k}}}
+$$
 
-### `opt_test_v3.py`
+  Where $n$ is the number of posts and $k$ is the degree of voice decreasing.
 
-> Setting up functions and procedures for optimization
+### Other Features
 
-Be aware of the attribute `self.label_data` under `class Optimization`, it's only a data frame with column name `platform`.
+Working... writing document is so hard 😭
 
-### `property_scoring.py`
-
-> Rank the KOL by two properties
-
-1. Robustness of interact / view ratio
-2. The experience of promotion
-
-### `main.py`
-
-> Main file to execute optimization procedure
-
-#### Execute command - `main.py`
-
-```plaintext
+## To Execute
 
 To execute the optimization procedure, I use shell script instead of python script to pass arguments.
+Regarding the sophisticated optimization procedure, we suggest everyone to first exxecute the `demo.sh` to see the possible scenarios.
+
+> Noticed that you need to change the execution permission of all `.sh` files by typing `chmod +x *.sh` in your terminal.
 
 ```plaintext
-chmod +x run.sh
-./run.sh
-```
-
-Things inside `run.sh` are like
-
-```bash
-# echo "Optimization"
-# python -m src.main --row 20 --type plain --budget 700 \
-#     --voice 8000 --lamb 0 --alpha 0 --post_cnt $(printf "%s" "10 5 5 0") \
-#     --spec_kols $(printf "%s" "7 10") \
-#     --w1 0.167 --w2 0.833
-
-
-echo "For pytest"
-python -m src.main --row 10 --type plain --budget 1000 \
-    --voice 5000 --lamb 0 --alpha 0 --post_cnt $(printf "%s" "1 1 1 1") \
-     --spec_kols $(printf "%s" "1 2 3 4") \
-     --w1 0.167 --w2 0.833
-
-
-# echo "plot heatmap"
-# python -m src.plot --file "all_20_plain.npy" --save True
-```
-
-- `--rows` is number of rows to use
-- `--type` is type of objective function to use
-- `--budget` is budget constraint of firm (thousand dollars)
-- `--voice` is target voice of firm
-- `--lamb` is lambda value for regularization methods
-- `--alpha` is alpha value for ElasticNet
-- `--post_cnt` constraints the minimum post count of specific post type
-- `--spec_kol` constraints the minimum number of specific kol
-- `--w1` the adjusted parameters for high weight constraints 
-- `--w2` the adjusted parameters for low weight constraints
-- `--candidates` number of candidates to choose
-
-#### Hyper parameters
-
-- `DEFAULT_K`: Degree of voice descent
-- `self.weight`: weight of constraint functions
-
-### `plot.py`
-
-> Plotting heatmap of post_count, voice/price ratio and line char for voice_decreasing rate
-
-#### Execute command - `plot.py`
-
-```plaintext
-python -m src.plot --file <file_name> --save <save fig or not>
-```
-
-Where
-
-- `--file` is file name of optimization result matrix
-- `--save` is optional argument to save figure or not
-
-## Demo
-
-Regarding the sophisticated optimization procedure, Here is a demo of some possible scenarios.
-
-To execute the demo file, type:
-
-```bash
-chmod +x ./demo.sh
+chmod +x demo.sh
 ./demo.sh
 ```
 
@@ -172,4 +120,33 @@ Select demo scenario:
 Enter your choice:
 ```
 
-Then you can choose one of the scenarios to execute, just type the number and press `Enter`.
+Now, you can choose one of the scenarios to execute, just type the number and press `Enter`. Then you will see the result of optimization procedure like below:
+
+```plaintext
+Output Cost: 665.0 (Thousand dollars)
+Output Voice: 6031.192183401445
+   platform live_count post_count short_count vid_count live_price post_price short_price vid_price live_voice  post_voice short_voice    vid_voice
+0        fb        0.0        0.0         0.0       0.0       25.0       46.0       187.0     250.0        0.0    5.917391         0.0  1194.974967
+1        fb        0.0        1.0         0.0       0.0       11.0       10.0       144.0     113.0        0.0   120.45432         0.0   741.681559
+2        fb        0.0        1.0         0.0       0.0       11.0        8.0       215.0     105.0        0.0  132.596772         0.0          0.0
+3        fb        0.0        0.0         0.0       0.0        5.0        2.0       284.0      93.0        0.0   35.593277         0.0     0.999999
+4        fb        0.0        0.0         0.0       0.0       99.0      120.0       202.0     368.0        0.0   281.29993         0.0          0.0
+5        fb        0.0        0.0         0.0       0.0       17.0       21.0       203.0     151.0        0.0   78.353186         0.0    38.949981
+============== Optimize Done, output information ===============
+Selected rows: 20 rows
+Objective function types: l2
+Budget Constraint: 700 (Thousand Dollars)
+Target Voice: 6000
+Regularization lambda: 0.5
+Minimum count: Live: 5, Post: 7, Short: 5, Vid: 7
+Choosed KOLs: KOL ['1', '2', '7', '8', '9']
+```
+
+## To Test
+
+To test the optimization procedure, we use `pytest` to test the functions in `src/` folder. To execute the test, you can simply execute the shell script `run_test.sh` in the root directory.
+
+```plaintext
+chmod +x run_test.sh
+./run_test.sh
+```

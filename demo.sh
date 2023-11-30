@@ -1,5 +1,17 @@
 #!/bin/bash
 
+echo "
+######################################################################
+Clear all numpy and plotly data? (y/n)
+######################################################################"
+read -p "Enter your choice: " choice
+
+if [ "$choice" == "y"]; then
+    ./clean.sh
+else
+    echo "Skip cleaning."
+fi
+
 echo "######################################################################"
 echo "#                  Demo script for Creation Portfolio                #"
 echo "######################################################################"
