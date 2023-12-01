@@ -592,10 +592,10 @@ class Optimizer(MyConstraints):
             mean_weight, sum_cons = np.mean(self.init_weight), np.sum(cons_result)
             for idx, _ in enumerate(self.weight):
                 multiplier = (sum_cons - cons_result[idx]) / sum_cons
-                if self.weight[idx] > mean_weight:
-                    self.weight[idx] = self.weight[idx] * 1.3 * multiplier
                 if self.weight[idx] < mean_weight:
                     self.weight[idx] = self.weight[idx] * 0.77 * multiplier
+                    if self.weight[idx] < 0.01:
+                        self.weight[idx] = 0
             print(f"Iterate: {self.count}. Adjusted weight: {self.weight}")
             solution, _ = self.run_opt(obj_function, constraints)
             comp_cost, comp_voice, result_with_label = self.get_opt_result(solution)
@@ -604,56 +604,6 @@ class Optimizer(MyConstraints):
                 obj_function, constraints, comp_cost, comp_voice
             )
             return result_with_label
-
-
-    # def add_weight(
-            # self, obj_function, constraints: dict, budget: float, voice: float
-        # ) -> tuple:
-        # """
-        # Parameters
-        # ----------
-        #
-        # - obj_function:
-            # objective function we use
-        # - constraints:
-            # constraints we use
-        # - remaining:
-            # remaining constraints after adjusting
-        # - budget:
-            # current budget
-        # - voice:
-            # current voice
-            #
-        # obj_function, constraints: type <method>
-        # """
-        # base case
-        # if (len(self.weight) == 1) or (budget < self.budget and voice > self.voice):
-            # solution, solution_matrix = self.run_opt(obj_function, constraints)
-            # print("Optimization terminated")
-            # return solution, solution_matrix
-
-        # recursion
-        # if (budget > self.budget and voice < self.voice) or \
-            # (budget < self.budget and voice < self.voice) or \
-            # (budget > self.budget and voice > self.voice):
-            # print("Constraint not satisfied, start adjusting constraint weight...\n")
-            # obj_result = obj_function(self.__input__, self.__lambda__)
-            # if constraints[-1]['fun'].__name__ == "constraint_voice":
-                # cons_result = constraints[-1]['fun'](self.__input__, self.voice)
-            # elif constraints[-1]['fun'].__name__ == "constraint_spec_kols":
-                # cons_result = np.sum(constraints[-1]['fun'](self.__input__))
-            # else:
-                # cons_result = constraints[-1]['fun'](self.__input__)
-            # print(f"Constraint to pop: {constraints[-1]['fun'].__name__}")
-            # obj_result += cons_result * self.weight[-1]
-            # self.weight.pop()
-            # constraints.pop()
-            # solution, _ = self.run_opt(obj_function, constraints)
-            # comp_cost, comp_voice, _ = self.get_opt_result(solution)
-            # solution, solution_matrix = self.add_weight(
-                # obj_function, constraints, comp_cost, comp_voice
-            # )
-        # return solution, solution_matrix
 
 
     def print_final_output(self, types: str) -> None:
