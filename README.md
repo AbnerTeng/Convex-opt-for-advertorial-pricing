@@ -68,18 +68,23 @@ Where $\mathbf{Cost}$ is the cost of each post and $\mathbf{Price}$ is the price
 
 Due to the issue of **over concentration** of post, we add penalty term to the objective function to split the post count of each KOL.
 
-1. L1 Regularization (Ridge Regression)
-   $$
-   \text{Obj function} = \text{minimize  }\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{|\cdot|}
-   $$
-2. L2 Regularization (Lasso Regression)
-   $$
-   \text{Obj function} = \text{minimize  }\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{2}
-   $$
-3. ElasticNet
-   $$
-   \text{Obj function} = \text{minimize  }\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \left(\alpha \cdot \mathbf{Count}^{|\cdot|} + \frac{(1-\alpha)}{2} \cdot \mathbf{Count}^{2}\right)
-   $$
+L1 Regularization (Ridge Regression)
+
+$$
+\text{Obj function} = \min\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{|\cdot|}
+$$
+
+L2 Regularization (Lasso Regression)
+
+$$
+\text{Obj function} = \min\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{2}
+$$
+
+ElasticNet
+
+$$
+\text{Obj function} = \min\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \left(\alpha \cdot \mathbf{Count}^{|\cdot|} + \frac{(1-\alpha)}{2} \cdot   \mathbf{Count}^{2}\right)
+$$
 
 ### Voice Decreasing Rate
 
