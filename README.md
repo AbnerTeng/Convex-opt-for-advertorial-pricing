@@ -61,7 +61,7 @@ root/
 The main goal of this project is to **minimizing** the cost of promotion, so we design a simple objective function to achieve this goal.
 
 $$
-\text{Obj function} = \text{minimize  }\mathbf{Cost}^\mathbf{T} \mathbf{Price}
+\text{Obj function} = \min\mathbf{Cost}^\mathbf{T} \mathbf{Price}
 $$
 
 Where $\mathbf{Cost}$ is the cost of each post and $\mathbf{Price}$ is the price of each post.
