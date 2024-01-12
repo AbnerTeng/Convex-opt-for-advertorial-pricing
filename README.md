@@ -2,11 +2,11 @@
   <img src="image/README/1701262792359.png" width="200"/>
 </p>
 
-# Creation Portfolio
+# Convex-opt for advertorial pricing
 
-Creation Portfolio is a project for optimizing the KOL selection problem. This project is based on [scipy](https://www.scipy.org/) minimize method.
+Convex-opt for advertorial pricing is a project for optimizing the KOL selection problem. This project is based on [scipy](https://www.scipy.org/) minimize method.
 
-Creation Portfolio is primarily designed to provide effective, robust and explainable optimization architecture for firms who want to select promotion KOLs on social media platforms for their products.
+It is primarily designed to provide effective, robust and explainable optimization architecture for firms who want to select promotion KOLs on social media platforms for their products.
 
 ## ⚙️ Build Virtual Environment
 
