@@ -9,7 +9,7 @@ This tool accepts a path to the raw data and a boolean argument to download
 import os
 import warnings
 import pandas as pd
-from .utils import load_data
+from .utils.data_utils import load_data
 warnings.filterwarnings('ignore')
 
 
@@ -75,10 +75,13 @@ class PreProc:
         use_data = self.filter_cols()
         if self.arg:
             self.data.to_csv(
-                f'{os.getcwd()}/data/preproc_data_v3.csv', encoding = 'utf-8', index = False
+                f'{os.getcwd()}/data/preproc_data_v3.csv',
+                encoding='utf-8', index=False
             )
             use_data.to_csv(
-                f'{os.getcwd()}/data/use_data_v2.csv', encoding = 'utf-8', index = False
+                f'{os.getcwd()}/data/use_data_v2.csv',
+                encoding='utf-8',
+                index=False
             )
 
 
@@ -89,6 +92,8 @@ class PreProc:
         use_data = self.filter_cols()
         if self.arg:
             use_data.to_csv(
-                f'{os.getcwd()}/data/use_data_v2.csv', encoding = 'utf-8', index = False
+                f'{os.getcwd()}/data/use_data_v2.csv',
+                encoding='utf-8',
+                index=False
             )
     

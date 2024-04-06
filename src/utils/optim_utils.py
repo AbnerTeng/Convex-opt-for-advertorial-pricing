@@ -9,50 +9,6 @@ import numpy as np
 from tqdm import tqdm
 
 
-def sigmoid(x: float) -> float:
-    """
-    sigmoid function
-    
-    Parameters
-    ----------
-    x: float
-        input value
-    """
-    return 1 / (1 + math.exp(-x))
-
-
-def load_data(path: str) -> pd.DataFrame:
-    """
-    Load .csv file from specific folder.
-    
-    Parameters
-    ----------
-    path: str
-        path of folder
-    """
-    data = pd.read_csv(path, encoding = 'utf-8')
-    return data
-
-
-def simple_trans(mat: np.ndarray, k: float) -> list:
-    """
-    simple voice decrease function
-    
-    Parameters
-    ----------
-    mat: np.ndarray
-        initial post_count data, size: (rows * cols, )
-    k: float
-        Degree of descent for specific post type
-    """
-    ratio = math.exp(-1/k)
-    return [
-        0 if element == 0 \
-        else ((1 - ratio ** element) / (1 - ratio)) \
-        for element in mat
-    ]
-
-
 def cnt_transform(post_cnt: list, rows: int, cols: int, k: list) -> list:
     """
     voice descent function for each post type
@@ -75,8 +31,7 @@ def cnt_transform(post_cnt: list, rows: int, cols: int, k: list) -> list:
         for row, element in enumerate(post_cnt[col]):
             if element == 0:
                 continue
-            else:
-                temp[col, row] = (1 - ratio ** element) / (1 - ratio)
+            temp[col, row] = (1 - ratio ** element) / (1 - ratio)
     return temp.T.flatten()
 
 
@@ -134,8 +89,7 @@ def check_valid_cost(cost: float, target: int) -> None:
     print("=========== Message ===========")
     if cost > target:
         raise ValueError('Budget constraint is not satisfied')
-    else:
-        print('Budget constraint is satisfied')
+    print('Budget constraint is satisfied')
 
 
 def check_valid_voice(voice: float, target: int) -> None:
@@ -158,8 +112,7 @@ def check_valid_voice(voice: float, target: int) -> None:
     print("=========== Message ===========")
     if voice < target:
         raise ValueError('Target voice constraint is not satisfied')
-    else:
-        print('Target voice constraint is satisfied')
+    print('Target voice constraint is satisfied')
 
 
 def get_specific_matrices(mat: np.ndarray) -> np.ndarray:
@@ -205,7 +158,9 @@ def matrix_greed_search(matrix: np.ndarray) -> np.ndarray:
             if max_cp < sorted_data[3, i]:
                 sorted_data[0, i] = np.ceil(sorted_data[0, i])
                 adj_count = sorted_data[0, i] - count_1d[i]
-                current_cp = (init_voice + adj_count * sorted_data[2, i]) / (init_price + adj_count * sorted_data[1, i])
+                current_cp = (
+                    init_voice + adj_count * sorted_data[2, i]
+                ) / (init_price + adj_count * sorted_data[1, i])
                 max_cp = current_cp
                 voice_adj += adj_count * sorted_data[2, i]
             else:
@@ -229,85 +184,3 @@ def matrix_greed_search(matrix: np.ndarray) -> np.ndarray:
         axis = 1
     )
     return result
-
-
-def min_max_scaler(mat: np.ndarray) -> np.ndarray:
-    """
-    min_max_scaler
-    
-    Arguments
-    ---------
-    mat: np.ndarray
-        input matrix
-    """
-    min_arr, max_arr = np.min(mat, axis = 0), np.max(mat, axis = 0)
-    result = (mat - min_arr) / (max_arr - min_arr)
-    return result
-
-
-def inverse_min_max_scaler(mat: np.ndarray) -> np.ndarray:
-    """
-    inverse min_max_scaler
-    
-    Arguments
-    ---------
-    mat: np.ndarray
-        input matrix
-    """
-    min_arr, max_arr = np.min(mat, axis = 0), np.max(mat, axis = 0)
-    result = -(mat - max_arr) / (max_arr - min_arr)
-    return result
-
-
-def standard_scaler(mat: np.ndarray) -> np.ndarray:
-    """
-    standard_scaler
-    
-    Arguments
-    ---------
-    mat: np.ndarray
-        input matrix
-    """
-    mean_arr, std_arr = np.mean(mat, axis = 0), np.std(mat, axis = 0)
-    result = (mat - mean_arr) / std_arr
-    return result
-
-
-def normalization(mat: np.ndarray, norm_type: str) -> np.ndarray:
-    """
-    normalization method
-    1. min-max scaler
-    2. inverse_min-max scaler
-    3. z-score scaler
-    
-    ----------
-    norm_type: str
-        - min-max
-        - inverse_min-max
-        - standard
-    """
-    if norm_type == "min-max":
-        scaler = min_max_scaler
-    elif norm_type == "inverse_min-max":
-        scaler = inverse_min_max_scaler
-    else:
-        scaler = standard_scaler
-    return scaler(mat)
-
-
-def to_df(mat: np.ndarray) -> pd.DataFrame:
-    """
-    Transform np.ndarray to pd.DataFrame
-    
-    Parameters
-    ----------
-    mat: np.ndarray
-        input matrix
-    """
-    return pd.DataFrame(
-        mat, columns=[
-            'platform', 'live_count', 'post_count', 'short_count', 'vid_count',
-            'live_price', 'post_price', 'short_price', 'vid_price',
-            'live_voice', 'post_voice', 'short_voice', 'vid_voice'
-        ]
-    )

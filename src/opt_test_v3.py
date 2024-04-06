@@ -14,216 +14,32 @@ This script contains 3 classes:
     This class is the full optimization process
 """
 import time
+from typing import List, Tuple, Dict
 import numpy as np
 from scipy.optimize import minimize
-from .utils import (
+from .utils.data_utils import (
     sigmoid,
     load_data,
+    to_df
+)
+from .utils.optim_utils import (
     cnt_transform,
     count_cost,
     count_voice,
-    matrix_greed_search,
-    to_df
+    matrix_greed_search
 )
-np.set_printoptions(precision=2, threshold=np.inf, suppress=True, linewidth=150)
-DEFAULT_K = [2.6, 2.8, 3.0, 3.2]
-
-
-class Attr:
-    """
-    Heavy using attributes
-    
-    Arguments
-    ---------
-    - use_path: str
-        path of use data
-    
-    - row: int
-        number of rows to be optimized(number of KOL to be selected)
-    
-    - post_cnt_lst: list
-        post count constraint for each type, order: live, post, short, vid
-        
-    - spec_kols_lst: list
-        specific kols need to be selected
-    
-    Attributes
-    ----------
-    - use_data: pd.DataFrame
-        full data used by optimization, contains all KOLs promotion price and voice
-    
-    - row: int
-        number of rows to be optimized(number of KOL to be selected)
-    
-    - col: int
-        number of columns of use data
-    
-    - price_data: np.ndarray
-        promotion price data of use data
-    
-    - voice_data: np.ndarray
-        voice data of use data
-    
-    - weight: list
-        Initial weight of each constraint, the firm will customize it
-    
-    - k: list
-        Degree of voice descent of specific post type
-    
-    - post_cnt_lst: list
-        post count constraint for each type, order: live, post, short, vid
-    
-    - spec_kols_lst: list
-        specific kols need to be selected
-    """
-    def __init__(
-        self, use_path: str, row: int, post_cnt_lst: list, spec_kols_lst: list
-    ) -> None:
-        self.use_data = np.array(
-            load_data(use_path)
-        )
-        self.row = row
-        self.col = len(self.use_data[0])
-        self.price_data = (
-            self.use_data[:self.row, int(self.col/3): 2 * int(self.col/3)] / 1000
-        ).reshape(self.row * int(self.col/3), 1)
-        self.voice_data = (
-            self.use_data[:self.row, 2 * int(self.col/3):]).reshape(self.row * int(self.col/3), 1
-        )
-        self.weight = [0.9, 0.8, 0.2, 0.2, 0.2, 0.2, 0.3]
-        self.k = DEFAULT_K
-        self.post_cnt_lst = post_cnt_lst
-        self.spec_kols_lst = spec_kols_lst
-
-
-class MyConstraints(Attr):
-    """
-    Class of all constraints, the father class is Attr, which contains all
-    attributes that will be used in constraints
-    
-    ...
-    
-    constraints:
-    - constraint_cost(__input__, budget)
-        Lower the cost within the budget
-
-    - constraint_voice(_input__, voice)
-        Raise the voice beyond the target voice
-
-    - constraint_live_cnt(__input__)
-        Let live post count be greater than the minimum count
-    
-    - constraint_post_cnt(__input__)
-        Let normal post count be greater than the minimum count
-
-    - constraint_short_cnt(__input__)
-        Let short count be greater than the minimum count
-
-    - constraint_vid_cnt(__input___)
-        Let video count be greater than the minimum count
-
-    - constraint_spec_kols(__input__)
-        Let specific KOLs be greater than the minimum count
-    """
-    def __init__(
-            self, use_path: str, row: int, post_cnt_lst: list, spec_kols_lst: list
-        ) -> None:
-        super(Attr, self).__init__(use_path, row, post_cnt_lst, spec_kols_lst)
-
-
-    def cost_cons(self, __input__: list, budget: int) -> float:
-        """
-        Parameters:
-        ==========================
-        - __input__: shape = (row * col, )
-        - budget: shape = (1, )
-        """
-        val = np.expand_dims(__input__, 1)
-        result = budget - val.T @ self.price_data
-        return result.item() * self.weight[0]
-
-
-    def voice_cons(self, __input__: list, voice: int) -> float:
-        """
-        Parameters:
-        ==========================
-        - __input__: shape = (row * col, )
-        - voice: shape = (1, )
-        """
-        trans_count = cnt_transform(__input__, self.row, int(self.col / 3), self.k)
-        trans_count = np.expand_dims(trans_count, 1)
-        result = trans_count.T @ self.voice_data - voice
-        return result.item() * self.weight[1]
-
-
-    def live_cnt(self, __input__: list) -> float:
-        """
-        Parameters:
-        ==========================
-        - __input__: shape = (row * col, )
-        """
-        __input__ = np.expand_dims(__input__, 1).reshape(self.row, int(self.col / 3))
-        result = np.sum(__input__, axis = 0)[0]
-        return (result - self.post_cnt_lst[0]) * self.weight[2]
-
-
-    def post_cnt(self, __input__: list) -> float:
-        """
-        Parameters:
-        ==========================
-        - __input__: shape = (row * col, )
-        """
-        __input__ = np.expand_dims(__input__, 1).reshape(self.row, int(self.col / 3))
-        result = np.sum(__input__, axis = 0)[1]
-        return (result - self.post_cnt_lst[1]) * self.weight[3]
-
-
-    def short_cnt(self, __input__: list) -> float:
-        """
-        Parameters:
-        ==========================
-        - __input__: shape = (row * col, )
-        """
-        __input__ = np.expand_dims(__input__, 1).reshape(self.row, int(self.col / 3))
-        result = np.sum(__input__, axis = 0)[2]
-        return (result - self.post_cnt_lst[2]) * self.weight[4]
-
-
-    def vid_cnt(self, __input__: list) -> float:
-        """
-        Parameters:
-        ==========================
-        - __input__: shape = (row * col, )
-        """
-        __input__ = np.expand_dims(__input__, 1).reshape(self.row, int(self.col / 3))
-        result = np.sum(__input__, axis = 0)[3]
-        return (result - self.post_cnt_lst[3]) * self.weight[5]
-
-
-    def spec_kols(self, __input__: list) -> list:
-        """
-        Parameters:
-        ===========================
-        - __input__: shape = (row * col, )
-        """
-        if self.spec_kols_lst == ['None']:
-            return 0
-        else:
-            __input__ = np.expand_dims(__input__, 1).reshape(self.row, int(self.col / 3))
-            result = []
-            for i in self.spec_kols_lst:
-                result.append(np.sum(__input__, axis = 1)[int(i)])
-            return [
-                (result[i] - 1) * self.weight[6] for i in range(len(result))
-            ]
+from .constraints import MyConstraints
+np.set_printoptions(
+    precision=2, threshold=np.inf, suppress=True, linewidth=150
+)
 
 
 class Optimizer(MyConstraints):
     """
     Class of optimization
-    
+
     ...
-    
+
     New Arguments
     ---------
     label_path: str
@@ -240,7 +56,7 @@ class Optimizer(MyConstraints):
 
     alpha: float
         Proportion of L1, L2 inside Elastic Net
-        
+
     Methods
     -------
     |--- objective(__input__)
@@ -249,36 +65,37 @@ class Optimizer(MyConstraints):
     └--- objective_enet(__input__):
 
     --> Objective functions with different regularization methods
-    
-    
     """
+
     def __init__(
-            self, use_path: str, row: int,
-            post_cnt_lst: list, spec_kols_lst: list, label_path: str,
-            budget: int, voice: int, lamb: float, alpha: float
-        ) -> None:
+        self, use_path: str, row: int,
+        post_cnt_lst: List[int],
+        spec_kols_lst: List[str],
+        label_path: str,
+        budget: int, voice: int, lamb: float, alpha: float
+    ) -> None:
         """
         Matrix Parameters
         -----------------
         - use_data: shape = (row, col)
-        
+
         - price_data: shape = (row * col/3, 1)
-        
+
         - voice_data: shape = (row * col/3, 1)
-        
+
         - label_data: shape = (row, 1)
-        
+
         Other Parameters
         ----------------
         - count: int
             Iteration count
-        
+
         - init_weight: list
             The copy of initial weight, used for adjusting weight
-        
+
         - __lambda__: shape = (row * col, 1)
             Degree of penalty of either L1, L2, or Elastic Net regularization
-        
+
         - __input__: shape = (row * col, 1)
             Input matrix of optimization
         """
@@ -293,26 +110,27 @@ class Optimizer(MyConstraints):
         self.count = 0
         self.init_weight = self.weight.copy()
         self.label_data = np.expand_dims(
-            np.array(load_data(self.label_path)['platform'])[:self.row], axis = 1
+            np.array(load_data(self.label_path)['platform'])[:self.row], axis=1
         )
         self.__lambda__ = np.full((self.row * int(self.col / 3), 1), self.lamb)
         self.__input__ = np.array([0.1] * self.row * int(self.col / 3))
 
-
     def constraint_output(
-            self, val: np.ndarray, trans_count: np.ndarray, input_count: np.ndarray
-        ) -> float:
+        self, val: np.ndarray,
+        trans_count: np.ndarray,
+        input_count: np.ndarray
+    ) -> float:
         """
         Add all result of constraints together
-        
+
         Arguments
         ---------
         val: np.ndarray
             __input__ after reshape, shape = (row * col, 1)
-        
+
         trans_count: np.ndarray
             Transformed count matrix, shape = (row, col / 3)
-        
+
         input_count: np.ndarray
             __input__ matrix, shape = (row, col / 3)
         """
@@ -321,30 +139,37 @@ class Optimizer(MyConstraints):
         else:
             result = []
             for i in self.spec_kols_lst:
-                semi_result = np.sum(input_count, axis = 1)[int(i)]
+                semi_result = np.sum(input_count, axis=1)[int(i)]
                 result.append(semi_result)
             spec_kols = [
                 (result[i] - 1) * self.weight[6] for i in range(len(result))
             ]
         result = (self.budget - val.T @ self.price_data) * self.weight[0] + \
             (trans_count.T @ self.voice_data - self.voice) * self.weight[1] + \
-            (np.sum(input_count, axis = 0)[0] - self.post_cnt_lst[0]) * self.weight[2] + \
-            (np.sum(input_count, axis = 0)[1] - self.post_cnt_lst[1]) * self.weight[3] + \
-            (np.sum(input_count, axis = 0)[2] - self.post_cnt_lst[2]) * self.weight[4] + \
-            (np.sum(input_count, axis = 0)[3] - self.post_cnt_lst[3]) * self.weight[5] + \
+            (
+                np.sum(input_count, axis=0)[0] - self.post_cnt_lst[0]
+            ) * self.weight[2] + \
+            (
+                np.sum(input_count, axis=0)[1] - self.post_cnt_lst[1]
+            ) * self.weight[3] + \
+            (
+                np.sum(input_count, axis=0)[2] - self.post_cnt_lst[2]
+            ) * self.weight[4] + \
+            (
+                np.sum(input_count, axis=0)[3] - self.post_cnt_lst[3]
+            ) * self.weight[5] + \
             np.sum(spec_kols)
         return result.item()
 
-
-    def objective(self, __input__: list, lamb=None) -> float:
+    def objective(self, __input__: List[float], lamb=None) -> float:
         """
         Parameters:
         ===========================
         - __input__: shape = (row * col, )
         ===========================
         Matrix multiplication:
-        
-                            [p0,   
+
+                            [p0,
                              p1,
         [x0, x1, ..., xn] @  p2,
                              ...,
@@ -361,8 +186,11 @@ class Optimizer(MyConstraints):
         final_opt = self.constraint_output(val, trans_count, input_cnt)
         return final_opt + obj_opt.item()
 
-
-    def objective_l1(self, __input__: list, lamb: list) -> float:
+    def objective_l1(
+        self,
+        __input__: List[float],
+        lamb: List[float]
+    ) -> float:
         """
         Parameters:
         ===========================
@@ -382,8 +210,11 @@ class Optimizer(MyConstraints):
         l1_term = lamb.T @ np.abs(__input__)
         return final_opt + l1_term.item() + obj_opt.item()
 
-
-    def objective_l2(self, __input__: list, lamb: list) -> float:
+    def objective_l2(
+        self,
+        __input__: List[float],
+        lamb: List[float]
+    ) -> float:
         """
         Parameters:
         ===========================
@@ -403,8 +234,11 @@ class Optimizer(MyConstraints):
         l2_term = lamb.T @ np.square(__input__)
         return final_opt + (l2_term.item() / 2) + obj_opt.item()
 
-
-    def objective_enet(self, __input__: list, lamb: list) -> float:
+    def objective_enet(
+        self,
+        __input__: List[float],
+        lamb: List[float]
+    ) -> float:
         """
         Parameters:
         ===========================
@@ -424,17 +258,17 @@ class Optimizer(MyConstraints):
         l1_term = lamb.T @ np.abs(__input__)
         l2_term = lamb.T @ np.square(__input__)
         return final_opt + obj_opt.item() + \
-            self.alpha * l1_term.item() + ((1 - self.alpha) / 2) * l2_term.item()
+            self.alpha * l1_term.item() \
+            + ((1 - self.alpha) / 2) * l2_term.item()
 
-
-    def get_functions(self, types: str) -> tuple:
+    def get_functions(self, types: str) -> Tuple:
         """
         Get functions
-        
+
         Parameters
         ----------
         - types: type of objective function
-        
+
         Output
         ------
         - func: objective function
@@ -459,16 +293,15 @@ class Optimizer(MyConstraints):
         ]
         return func, cons_func
 
-
-    def run_opt(self, func, cons_func: dict) -> tuple:
+    def run_opt(self, func, cons_func: Dict) -> tuple:
         """
         Run the full optimization process
-        
+
         Parameters
         ----------
         - func: objective function
         - cons_func: constraints function
-        
+
         Output
         ------
         - solution: the full information and result of the optimization
@@ -478,13 +311,13 @@ class Optimizer(MyConstraints):
         print("===================================================")
         start_time = time.time()
         solution = minimize(
-            fun = func,
-            x0 = self.__input__,
-            args = ([0] if func is self.objective else (self.__lambda__, )),
-            method = 'SLSQP',
-            bounds = [(0, 100)] * self.row * int(self.col / 3),
-            constraints = cons_func,
-            options = {'maxiter': 500, 'disp': True}
+            fun=func,
+            x0=self.__input__,
+            args=([0] if func is self.objective else (self.__lambda__, )),
+            method='SLSQP',
+            bounds=[(0, 100)] * self.row * int(self.col / 3),
+            constraints=cons_func,
+            options={'maxiter': 500, 'disp': True}
         )
         end_time = time.time()
         print("===================================================")
@@ -492,17 +325,16 @@ class Optimizer(MyConstraints):
         print(f"Time elapsed: {end_time - start_time} seconds")
         return solution, solution.x
 
-
-    def get_opt_result(self, solution) -> tuple:
+    def get_opt_result(self, solution) -> Tuple:
         """
         Print optimization result
-        
+
         Arguments
         ---------
         - solution: the full information and result of the optimization
 
         * We only need the matrix part of the solution
-        
+
         Output
         ------
         - c_cost: optimized cost
@@ -526,44 +358,45 @@ class Optimizer(MyConstraints):
                     )
                 )
             ),
-            axis = 1
+            axis=1
         )
         final_result = matrix_greed_search(final_result)
-        # print(f"Adjusted Parameters matrix: \n {final_result}")
-        result_with_label = np.concatenate((self.label_data, final_result), axis = 1)
+        result_with_label = np.concatenate(
+            (self.label_data, final_result),
+            axis=1
+        )
         c_cost = count_cost(final_result, self.col)
         c_voice = count_voice(final_result, self.col)
         print(f"Output Cost: {c_cost} (Thousand dollars)")
         print(f"Output Voice: {c_voice}")
         return c_cost, c_voice, result_with_label
 
-
     def adjust_weight(
-            self, obj_function, constraints: dict, budget: float, voice: float
-        ) -> tuple:
+        self, obj_function, constraints: Dict, budget: float, voice: float
+    ) -> Tuple:
         """
         Adjust weight automatically based on the result of optimization
-        
+
         Arguments
         ---------
         - obj_function:
             objective function we use
-            
+
         - constraints:
             constraints we use
-            
+
         - budget:
             current budget
-            
+
         - voice:
             current voice
-        
+
         Output
         ------
         Same as the run_opt() function
         """
         self.count += 1
-        ## base case
+
         if (budget < self.budget and voice > self.voice) or (self.count > 200):
             solution, _ = self.run_opt(obj_function, constraints)
             print("Optimization terminated")
@@ -571,10 +404,12 @@ class Optimizer(MyConstraints):
             print(to_df(result_with_label))
             return result_with_label
 
-        ## recursion
-        if (budget > self.budget and voice < self.voice) or \
+
+        if (
+            (budget > self.budget and voice < self.voice) or \
             (budget < self.budget and voice < self.voice) or \
-            (budget > self.budget and voice > self.voice):
+            (budget > self.budget and voice > self.voice)
+        ):
             print(
                 f"Iterate: {self.count}. Constraint not satisfied, start adjusting constrant weight"
             )
@@ -588,14 +423,19 @@ class Optimizer(MyConstraints):
                     cons_result.append(np.sum(cons['fun'](self.__input__)))
                 else:
                     cons_result.append(cons['fun'](self.__input__))
+
             cons_result = [sigmoid(np.abs(cons)) for cons in cons_result]
             mean_weight, sum_cons = np.mean(self.init_weight), np.sum(cons_result)
+
             for idx, _ in enumerate(self.weight):
                 multiplier = (sum_cons - cons_result[idx]) / sum_cons
+
                 if self.weight[idx] < mean_weight:
                     self.weight[idx] = self.weight[idx] * 0.77 * multiplier
-                    if self.weight[idx] < 0.01:
-                        self.weight[idx] = 0
+
+                if self.weight[idx] < 0.01:
+                    self.weight[idx] = 0
+
             print(f"Iterate: {self.count}. Adjusted weight: {self.weight}")
             solution, _ = self.run_opt(obj_function, constraints)
             comp_cost, comp_voice, result_with_label = self.get_opt_result(solution)
@@ -604,7 +444,6 @@ class Optimizer(MyConstraints):
                 obj_function, constraints, comp_cost, comp_voice
             )
             return result_with_label
-
 
     def print_final_output(self, types: str) -> None:
         """

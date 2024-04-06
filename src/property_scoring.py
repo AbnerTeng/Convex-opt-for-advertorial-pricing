@@ -18,7 +18,7 @@ import warnings
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from .utils import load_data, min_max_scaler, inverse_min_max_scaler
+from .utils.data_utils import load_data, min_max_scaler, inverse_min_max_scaler
 
 warnings.filterwarnings('ignore')
 

@@ -10,7 +10,7 @@ from .opt_test_v3 import Optimizer
 from .property_scoring import PropertyScoring
 
 
-def arguments() -> ArgumentParser:
+def parse_args() -> ArgumentParser:
     """
     arguments parser function
     """
@@ -74,9 +74,7 @@ def arguments() -> ArgumentParser:
 
 
 if __name__ == "__main__":
-    ## ================= Parser ================= ##
-    args = arguments()
-    ## ================= Filter by scoring ================= ##
+    args = parse_args()
     __property__ = PropertyScoring(
         f'{os.getcwd()}/data/scoring_data_v3.csv', args.w1, args.w2
     )
@@ -86,14 +84,14 @@ if __name__ == "__main__":
     preproc_data = pd.read_csv(f'{os.getcwd()}/data/preproc_data_v3.csv')
     preproc_data = preproc_data[preproc_data['name'].isin(org_data_full_filtered['name'])]
     preproc_data.to_csv(f'{os.getcwd()}/data/preproc_data_v4.csv', index=False)
-    ## ================= Preproc ================= ##
+
     if args.do_preproc:
         preprocessing = PreProc(args.dat_name, args.download)
         if args.dat_name.split("_")[0] == "preproc":
             preprocessing.for_preproc_data()
     else:
         pass
-    ## ================= Optimizer ================= ##
+
     optimizer = Optimizer(
         f"{os.getcwd()}/data/use_data.csv", args.row, args.post_cnt, args.spec_kols,
         f"{os.getcwd()}/data/preproc_data_v4.csv", args.budget, args.voice, args.lamb,
@@ -105,10 +103,5 @@ if __name__ == "__main__":
     result_with_label = optimizer.adjust_weight(
         func, cons_func, comp_cost, comp_voice
     )
-    # for index, cons in enumerate(cons_func):
-    #     cons['weight'] = optimizer.weight[index]
-    # cons_func = sorted(cons_func, key = lambda x: x['weight'])
     optimizer.print_final_output(args.type)
     np.save(f'{os.getcwd()}/data/param_mat/all_{args.row}_{args.type}.npy', result_with_label)
-
-

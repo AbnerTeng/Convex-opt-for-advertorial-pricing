@@ -7,7 +7,8 @@ import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.io as pio
-from .utils import simple_trans, get_specific_matrices
+from .utils.data_utils import simple_trans
+from .utils.optim_utils import get_specific_matrices
 
 class DrawFig:
     """
@@ -179,7 +180,7 @@ class DrawFig:
         ## simulate_fig = self.line_chart(self.get_specific_matrices()[3])
         ## simulate_fig.show()
         full_fig.show()
-        if self.save:
+        if self.save is True:
             pio.write_html(
                 full_fig,
                 f'{os.getcwd()}/data/plotly_fig/opt_heat.html'
@@ -190,11 +191,11 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
         '-f', '--file',
-        type = str, help = 'File name of the ndarray'
+        type=str, help='File name of the ndarray'
     )
     parser.add_argument(
         '-s', '--save',
-        type = bool, default = False, help = 'Save the plot'
+        type=bool, default=False, help='Save the plot'
     )
     args = parser.parse_args()
     figures = DrawFig(
