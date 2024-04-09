@@ -61,29 +61,29 @@ root/
 The main goal of this project is to **minimizing** the cost of promotion, so we design a simple objective function to achieve this goal.
 
 $$
-\text{Obj function} = \min\mathbf{Cost}^\mathbf{T} \mathbf{Price}
+\text{Obj function} = \min\mathbf{Count}^\mathbf{T} \mathbf{Price}
 $$
 
-Where $\mathbf{Cost}$ is the cost of each post and $\mathbf{Price}$ is the price of each post.
+  Where $\mathbf{Count}$ is the amount of total posts and $\mathbf{Price}$ is the price of each post.
 
 Due to the issue of **over concentration** of post, we add penalty term to the objective function to split the post count of each KOL.
 
 L1 Regularization (Ridge Regression)
 
 $$
-\text{Obj function} = \min\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{|\cdot|}
+\text{Obj function} = \min\mathbf{Count}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{|\cdot|}
 $$
 
 L2 Regularization (Lasso Regression)
 
 $$
-\text{Obj function} = \min\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{2}
+\text{Obj function} = \min\mathbf{Count}^\mathbf{T} \mathbf{Price} + \lambda \cdot \mathbf{Count}^{2}
 $$
 
 ElasticNet
 
 $$
-\text{Obj function} = \min\mathbf{Cost}^\mathbf{T} \mathbf{Price} + \lambda \cdot \left(\alpha \cdot \mathbf{Count}^{|\cdot|} + \frac{(1-\alpha)}{2} \cdot   \mathbf{Count}^{2}\right)
+\text{Obj function} = \min\mathbf{Count}^\mathbf{T} \mathbf{Price} + \lambda \cdot \left(\alpha \cdot \mathbf{Count}^{|\cdot|} + \frac{(1-\alpha)}{2} \cdot   \mathbf{Count}^{2}\right)
 $$
 
 ### Voice Decreasing Rate
